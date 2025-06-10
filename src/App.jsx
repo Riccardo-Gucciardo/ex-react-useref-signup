@@ -1,62 +1,75 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 
 const letters = "abcdefghijklmnopqrstuvwxyz";
 const numbers = "0123456789";
 const symbols = "!@#$%^&*()-_=+[]{}|;:'\\,.<>?/`~";
 
 function RegistrationForm() {
-  const [fullName, setFullName] = useState('riccardi');
-  const [username, setUsername] = useState('vfhbvjfhbdvjbdf');
-  const [password, setPassword] = useState('kjbvkddkf?ò9');
-  const [description, setDescription] = useState(''); 
-  const [specialization, setSpecialization] = useState('');
-  const [experience, setExperience] = useState(1);
-  const [errors, setErrors] = useState({});
+  // Stati per gli input controllati
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [description, setDescription] = useState('');
+  const [errors, setErrors] = useState({}); // Stato per gli errori
 
+  // Riferimenti per gli input non controllati
+  const fullNameRef = useRef();
+  const specializationRef = useRef();
+  const experienceRef = useRef();
 
+  // Validazioni con useMemo
   const isUsernameValid = useMemo(() => {
-    const caratteriValidi = username.split("").every(char =>letters.includes(char.toLowerCase()) || numbers.includes(char))
+    const caratteriValidi = username.split("").every(
+      char => letters.includes(char.toLowerCase()) || numbers.includes(char)
+    );
     return caratteriValidi && username.trim().length >= 6;
-
-  },[username])
+  }, [username]);
 
   const isPasswordValid = useMemo(() => {
-    return(
+    return (
       password.trim().length >= 8 &&
       password.split("").some(char => letters.includes(char)) &&
       password.split("").some(char => numbers.includes(char)) &&
-      password.split("").some(char => symbols.includes(char)) 
-    )
-
-  },[password])
+      password.split("").some(char => symbols.includes(char))
+    );
+  }, [password]);
 
   const isDescriptionValid = useMemo(() => {
-    return description.trim().length >= 100 && description.trim() < 1000
-  },[description])
+    return description.trim().length >= 100 && description.trim().length < 1000;
+  }, [description]);
 
-  const handleFullNameChange = (e) => setFullName(e.target.value);
+  // Handler per gli input controllati
   const handleUsernameChange = (e) => setUsername(e.target.value);
   const handlePasswordChange = (e) => setPassword(e.target.value);
-  const handleSpecializationChange = (e) => setSpecialization(e.target.value);
-  const handleExperienceChange = (e) => setExperience(e.target.value);
   const handleDescriptionChange = (e) => setDescription(e.target.value);
 
+  // Funzione di validazione (esatta come la tua)
   const validateForm = () => {
     const newErrors = {};
+    const fullName = fullNameRef.current?.value || '';
     if (!fullName.trim()) newErrors.fullName = 'Il nome completo è obbligatorio';
     if (!username.trim()) newErrors.username = 'Lo username è obbligatorio';
     if (!password.trim()) newErrors.password = 'La password è obbligatoria';
+    const specialization = specializationRef.current?.value || '';
     if (!specialization) newErrors.specialization = 'Seleziona una specializzazione';
+    const experience = experienceRef.current?.value || '';
     if (!experience || experience <= 0) newErrors.experience = 'Inserisci un numero di anni valido (maggiore di 0)';
     if (!description.trim()) newErrors.description = 'La descrizione è obbligatoria';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // Gestione dell'invio del form
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      const formData = { fullName, username, password, specialization, experience, description };
+      const formData = {
+        fullName: fullNameRef.current.value,
+        username,
+        password,
+        specialization: specializationRef.current.value,
+        experience: experienceRef.current.value,
+        description,
+      };
       console.log('Dati del form:', formData);
     }
   };
@@ -69,10 +82,9 @@ function RegistrationForm() {
           className="form-input"
           type="text"
           id="fullName"
-          value={fullName}
-          onChange={handleFullNameChange}
+          ref={fullNameRef}
         />
-        {errors.fullName && <span className="form-error">{errors.fullName}</span>}
+        {errors.fullName && <p style={{ color: 'red' }}>{errors.fullName}</p>}
       </div>
 
       <div className="form-group">
@@ -85,8 +97,11 @@ function RegistrationForm() {
           onChange={handleUsernameChange}
         />
         {username.trim() && (
-          <p style={{color: isUsernameValid ? 'green' : 'red'}}>{isUsernameValid ? "username valido" : "deve avere almeno 6 caratteri"}</p>
+          <p style={{ color: isUsernameValid ? 'green' : 'red' }}>
+            {isUsernameValid ? "username valido" : "deve avere almeno 6 caratteri"}
+          </p>
         )}
+        {errors.username && <p style={{ color: 'red' }}>{errors.username}</p>}
       </div>
 
       <div className="form-group">
@@ -99,8 +114,11 @@ function RegistrationForm() {
           onChange={handlePasswordChange}
         />
         {password.trim() && (
-          <p style={{color: isPasswordValid ? 'green' : 'red'}}>{isPasswordValid ? "password valida" : "deve avere almeno 8 caratteri: lettera numero simbolo "}</p>
+          <p style={{ color: isPasswordValid ? 'green' : 'red' }}>
+            {isPasswordValid ? "password valida" : "deve avere almeno 8 caratteri: lettera numero simbolo "}
+          </p>
         )}
+        {errors.password && <p style={{ color: 'red' }}>{errors.password}</p>}
       </div>
 
       <div className="form-group">
@@ -108,15 +126,14 @@ function RegistrationForm() {
         <select
           className="form-select"
           id="specialization"
-          value={specialization}
-          onChange={handleSpecializationChange}
+          ref={specializationRef}
         >
           <option value="">Seleziona...</option>
           <option value="Full Stack">Full Stack</option>
           <option value="Frontend">Frontend</option>
           <option value="Backend">Backend</option>
         </select>
-        {errors.specialization && <span className="form-error">{errors.specialization}</span>}
+        {errors.specialization && <p style={{ color: 'red' }}>{errors.specialization}</p>}
       </div>
 
       <div className="form-group">
@@ -125,10 +142,9 @@ function RegistrationForm() {
           className="form-input"
           type="number"
           id="experience"
-          value={experience}
-          onChange={handleExperienceChange}
+          ref={experienceRef}
         />
-        {errors.experience && <span className="form-error">{errors.experience}</span>}
+        {errors.experience && <p style={{ color: 'red' }}>{errors.experience}</p>}
       </div>
 
       <div className="form-group">
@@ -140,8 +156,11 @@ function RegistrationForm() {
           onChange={handleDescriptionChange}
         />
         {description.trim() && (
-          <p style={{color: isDescriptionValid ? 'green' : 'red'}}>{isDescriptionValid ? "descrizione valida" : `deve avere almeno 100 caratteri ${description.trim().length}`}</p>
+          <p style={{ color: isDescriptionValid ? 'green' : 'red' }}>
+            {isDescriptionValid ? "descrizione valida" : `deve avere almeno 100 caratteri ${description.trim().length}`}
+          </p>
         )}
+        {errors.description && <p style={{ color: 'red' }}>{errors.description}</p>}
       </div>
 
       <button className="form-button" type="submit">Invia</button>
